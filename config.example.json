@@ -1,0 +1,9 @@
+{
+  "webhook_url": "https://api2.cursor.sh/automations/webhook/your-routine-id",
+  "webhook_authorization": "Bearer YOUR_GROK_WEBHOOK_KEY",
+  "listen_addr": "127.0.0.1:8787",
+  "state_dir": "~/.wechat-clawbot-grok-bridge",
+  "enable_typing_indicator": true,
+  "reply_http_path": "/v1/reply",
+  "longpoll_timeout_ms": 35000
+}

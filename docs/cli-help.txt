@@ -1,0 +1,18 @@
+WeChat ClawBot (iLink) ↔ Grok Bot webhook bridge
+
+Usage:
+  wechat-clawbot-grok-bridge [command]
+
+Available Commands:
+  completion  Generate the autocompletion script for the specified shell
+  help        Help about any command
+  login       QR login / bind WeChat ClawBot via iLink
+  send        Send an outbound text or image message
+  serve       Start long-poll bridge (forward inbound messages to Grok webhook)
+  status      Show login and configuration status
+
+Flags:
+      --config string   Path to config.json (default: ~/.wechat-clawbot-grok-bridge/config.json)
+  -h, --help            help for wechat-clawbot-grok-bridge
+
+Use "wechat-clawbot-grok-bridge [command] --help" for more information about a command.

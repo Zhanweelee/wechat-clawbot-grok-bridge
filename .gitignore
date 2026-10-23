@@ -1,0 +1,28 @@
+# Binaries
+/wechat-clawbot-grok-bridge
+/bin/
+/dist/
+
+# Go
+*.exe
+*.test
+*.out
+coverage.out
+
+# Local state & secrets
+.wechat-clawbot-grok-bridge/
+config.json
+session.json
+*.pem
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp
+logo-source.jpg

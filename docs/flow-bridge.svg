@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="220" viewBox="0 0 720 220">
+  <rect width="720" height="220" fill="#0f1115"/>
+  <text x="360" y="28" fill="#9aa4b2" font-family="system-ui,sans-serif" font-size="13" text-anchor="middle">Illustrative message path (placeholder diagram)</text>
+  <rect x="40" y="70" width="120" height="64" rx="8" fill="#1a2332" stroke="#f59e0b"/>
+  <text x="100" y="106" fill="#e8ecf1" font-size="13" text-anchor="middle">WeChat user</text>
+  <path d="M160 102 H200" stroke="#3d7eff" stroke-width="2"/>
+  <rect x="200" y="54" width="150" height="108" rx="8" fill="#1a2332" stroke="#2dd4bf" stroke-width="2"/>
+  <text x="275" y="88" fill="#e8ecf1" font-size="13" text-anchor="middle">Bridge</text>
+  <text x="275" y="108" fill="#9aa4b2" font-size="11" text-anchor="middle">getupdates</text>
+  <text x="275" y="126" fill="#9aa4b2" font-size="11" text-anchor="middle">typing + webhook</text>
+  <path d="M350 102 H390" stroke="#3d7eff" stroke-width="2"/>
+  <rect x="390" y="70" width="150" height="64" rx="8" fill="#1a2332" stroke="#a78bfa"/>
+  <text x="465" y="98" fill="#e8ecf1" font-size="13" text-anchor="middle">Grok Bot</text>
+  <text x="465" y="116" fill="#9aa4b2" font-size="11" text-anchor="middle">webhook routine</text>
+  <path d="M540 102 H580" stroke="#3d7eff" stroke-width="2" stroke-dasharray="6 4"/>
+  <rect x="580" y="70" width="100" height="64" rx="8" fill="#1a2332" stroke="#22c55e"/>
+  <text x="630" y="98" fill="#e8ecf1" font-size="12" text-anchor="middle">POST</text>
+  <text x="630" y="116" fill="#9aa4b2" font-size="11" text-anchor="middle">/v1/reply</text>
+  <text x="360" y="190" fill="#6b7280" font-size="11" text-anchor="middle">Reply API on listen_addr lets a routine send text back to WeChat</text>
+</svg>
