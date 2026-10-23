@@ -4,22 +4,20 @@
   <rect x="24" y="56" width="140" height="72" rx="8" fill="#1a2332" stroke="#3d7eff" stroke-width="2"/>
   <text x="94" y="88" fill="#e8ecf1" font-family="system-ui,sans-serif" font-size="14" text-anchor="middle">CLI</text>
   <text x="94" y="108" fill="#9aa4b2" font-size="12" text-anchor="middle">login</text>
-  <path d="M164 92 H210" stroke="#3d7eff" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M164 92 H200" stroke="#3d7eff" stroke-width="2"/>
+  <polygon points="200,88 210,92 200,96" fill="#3d7eff"/>
   <rect x="210" y="56" width="160" height="72" rx="8" fill="#1a2332" stroke="#2dd4bf" stroke-width="2"/>
   <text x="290" y="88" fill="#e8ecf1" font-size="14" text-anchor="middle">iLink API</text>
   <text x="290" y="108" fill="#9aa4b2" font-size="12" text-anchor="middle">QR + poll</text>
-  <path d="M370 92 H416" stroke="#3d7eff" stroke-width="2"/>
+  <path d="M370 92 H406" stroke="#3d7eff" stroke-width="2"/>
+  <polygon points="406,88 416,92 406,96" fill="#3d7eff"/>
   <rect x="416" y="56" width="140" height="72" rx="8" fill="#1a2332" stroke="#f59e0b" stroke-width="2"/>
   <text x="486" y="88" fill="#e8ecf1" font-size="14" text-anchor="middle">WeChat</text>
   <text x="486" y="108" fill="#9aa4b2" font-size="12" text-anchor="middle">scan QR</text>
-  <path d="M556 92 H602" stroke="#3d7eff" stroke-width="2"/>
+  <path d="M556 92 H592" stroke="#3d7eff" stroke-width="2"/>
+  <polygon points="592,88 602,92 592,96" fill="#3d7eff"/>
   <rect x="602" y="56" width="94" height="72" rx="8" fill="#1a2332" stroke="#22c55e" stroke-width="2"/>
   <text x="649" y="96" fill="#e8ecf1" font-size="13" text-anchor="middle">session</text>
   <text x="649" y="114" fill="#9aa4b2" font-size="11" text-anchor="middle">saved</text>
-  <defs>
-    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-      <path d="M0,0 L6,3 L0,6 Z" fill="#3d7eff"/>
-    </marker>
-  </defs>
   <text x="360" y="168" fill="#6b7280" font-size="11" text-anchor="middle">Jonathan Lee · wechat-clawbot-grok-bridge · MIT</text>
 </svg>
