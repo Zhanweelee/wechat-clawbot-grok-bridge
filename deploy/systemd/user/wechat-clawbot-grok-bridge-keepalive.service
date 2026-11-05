@@ -1,0 +1,7 @@
+[Unit]
+Description=One-shot health check for wechat-clawbot-grok-bridge
+
+[Service]
+Type=oneshot
+EnvironmentFile=-%h/.config/wechat-clawbot-grok-bridge/env
+ExecStart=%h/.local/bin/wechat-clawbot-grok-bridge-keepalive

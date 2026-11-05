@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.wechat-clawbot-grok-bridge.watchdog</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/usr/local/bin/wechat-clawbot-grok-bridge-watchdog</string>
+	</array>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>WCG_KEEPALIVE</key>
+		<string>HOME_PLACEHOLDER/.local/bin/wechat-clawbot-grok-bridge-keepalive</string>
+		<key>WCG_WATCHDOG_INTERVAL</key>
+		<string>120</string>
+	</dict>
+	<key>StandardOutPath</key>
+	<string>HOME_PLACEHOLDER/.local/state/wechat-clawbot-grok-bridge/watchdog.log</string>
+	<key>StandardErrorPath</key>
+	<string>HOME_PLACEHOLDER/.local/state/wechat-clawbot-grok-bridge/watchdog.log</string>
+	<key>KeepAlive</key>
+	<true/>
+	<key>RunAtLoad</key>
+	<true/>
+</dict>
+</plist>

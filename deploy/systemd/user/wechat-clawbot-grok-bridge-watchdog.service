@@ -1,0 +1,14 @@
+[Unit]
+Description=2-minute keepalive loop for wechat-clawbot-grok-bridge
+After=network-online.target
+
+[Service]
+Type=simple
+Environment=WCG_KEEPALIVE=%h/.local/bin/wechat-clawbot-grok-bridge-keepalive
+Environment=WCG_WATCHDOG_INTERVAL=120
+ExecStart=%h/.local/bin/wechat-clawbot-grok-bridge-watchdog
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=default.target

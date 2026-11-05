@@ -154,6 +154,86 @@ curl -s -X POST http://127.0.0.1:8787/v1/reply \
 
 ---
 
+## 生产保活（keepalive / watchdog）
+
+**为何需要：** Grok Bot 云端例行程序通常**最快只能每 5 分钟**触发一次，无法及时发现本机 `serve` 进程已退出或机器重启后桥接未拉起。此时微信用户发消息会**静默无回复**（Webhook 根本收不到 inbound）。在运行 `serve` 的同一台机器上增加 **约 2 分钟** 的本地巡检，可在进程死亡后尽快自动重启；若问题需人工处理（未登录、配置错误），会写入告警文件供 Grok 例行程序转发给你。
+
+**English (short):** Grok cloud routines cannot poll faster than ~5 minutes, so a dead local `serve` means silent WeChat. Run a **120s watchdog** on the bridge host; optional Grok routine (≥5m) can ensure the watchdog is running and read `watchdog.alert` for `NEED_USER` lines.
+
+### 健康检查方式
+
+`serve` 启动后会在配置的 `listen_addr`（默认 `127.0.0.1:8787`）暴露 **`GET /healthz`**（返回 `ok`）。`deploy/wechat-clawbot-grok-bridge-keepalive` 优先用该端点判断进程是否存活，并用 `status` 确认已 `login`。
+
+### 安装脚本（不提交密钥）
+
+```bash
+make build   # 或 go install ./cmd/wechat-clawbot-grok-bridge
+install -m 755 deploy/wechat-clawbot-grok-bridge-keepalive deploy/wechat-clawbot-grok-bridge-watchdog \
+  ~/.local/bin/
+mkdir -p ~/.config/wechat-clawbot-grok-bridge ~/.local/state/wechat-clawbot-grok-bridge
+cp deploy/env.example ~/.config/wechat-clawbot-grok-bridge/env
+chmod 600 ~/.config/wechat-clawbot-grok-bridge/env
+# 编辑 env，填入 WCG_WEBHOOK_*；勿把 env 提交到 Git
+install -m 755 bin/wechat-clawbot-grok-bridge ~/.local/bin/   # 若使用本地 build
+```
+
+环境变量（可选覆盖）：
+
+| 变量 | 默认 | 说明 |
+|------|------|------|
+| `WCG_BRIDGE` | `~/.local/bin/wechat-clawbot-grok-bridge` | 二进制路径 |
+| `WCG_CONFIG` | `~/.wechat-clawbot-grok-bridge/config.json` | 配置文件 |
+| `WCG_ENVFILE` | `~/.config/wechat-clawbot-grok-bridge/env` | `serve` / keepalive 加载的环境 |
+| `WCG_KEEPALIVE` | `~/.local/bin/...-keepalive` | watchdog 调用的脚本 |
+| `WCG_WATCHDOG_INTERVAL` | `120` | 巡检间隔（秒） |
+| `WCG_OPS_STATE_DIR` | `~/.local/state/wechat-clawbot-grok-bridge` | 日志与告警目录 |
+
+### 一次性探测（适合 cron / Grok 钩子）
+
+```bash
+~/.local/bin/wechat-clawbot-grok-bridge-keepalive
+# 仅一行输出：ok | restarted: … | NEED_USER: …
+```
+
+### 推荐：后台 2 分钟 watchdog 循环
+
+```bash
+nohup ~/.local/bin/wechat-clawbot-grok-bridge-watchdog >>~/.local/state/wechat-clawbot-grok-bridge/watchdog.log 2>&1 &
+# 或 setsid（与 keepalive  detached 重启方式一致）
+```
+
+日志与告警路径：
+
+| 文件 | 说明 |
+|------|------|
+| `~/.local/state/wechat-clawbot-grok-bridge/watchdog.log` | 每次巡检一行（含时间戳） |
+| `~/.local/state/wechat-clawbot-grok-bridge/watchdog.alert` | 存在时表示最近为 `NEED_USER:*`；恢复为 `ok` 后自动删除 |
+| `~/.local/state/wechat-clawbot-grok-bridge/serve.log` | 无 systemd 时 keepalive 用 nohup 拉起 `serve` 的日志 |
+| `~/.local/state/wechat-clawbot-grok-bridge/watchdog.pid` | 当前 watchdog 进程 PID |
+
+可选 **Grok Bot 例行程序（≥5 分钟）**：检查 `watchdog.pid` 是否仍存活、读取 `watchdog.alert` 内容并通知用户；云端无法代替本机重启 `serve`，只能补位「watchdog 本身挂了」的场景。
+
+### systemd 用户单元（可选）
+
+模板见 `deploy/systemd/user/`。示例：
+
+```bash
+mkdir -p ~/.config/systemd/user
+cp deploy/systemd/user/wechat-clawbot-grok-bridge.service ~/.config/systemd/user/
+cp deploy/systemd/user/wechat-clawbot-grok-bridge-watchdog.service ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now wechat-clawbot-grok-bridge.service
+systemctl --user enable --now wechat-clawbot-grok-bridge-watchdog.service
+```
+
+若更偏好 timer 而非常驻 watchdog，可使用同目录下的 `wechat-clawbot-grok-bridge-keepalive.timer`（每 2 分钟执行一次 oneshot keepalive）。
+
+### macOS launchd（可选）
+
+`deploy/launchd/` 内 plist 将 `HOME_PLACEHOLDER` 替换为你的 `$HOME` 后，复制到 `~/Library/LaunchAgents/` 并用 `launchctl bootstrap` 加载。Webhook 密钥仍放在 `~/.config/wechat-clawbot-grok-bridge/env`，不要写进 plist 并提交仓库。
+
+---
+
 ## CLI 帮助（本机运行输出）
 
 <p align="center">
@@ -219,6 +299,8 @@ make build
 ## English reference
 
 **Commands:** `login`, `serve`, `send`, `status` — see sections above.
+
+**Ops:** Use `deploy/wechat-clawbot-grok-bridge-keepalive` (one-shot, checks `/healthz`) and `deploy/wechat-clawbot-grok-bridge-watchdog` (120s loop). See **生产保活** for install paths, env vars, and systemd/launchd templates.
 
 **iLink base URL:** `https://ilinkai.weixin.qq.com` for QR login; post-login API may use account-specific `baseurl` from the confirmed session.
 

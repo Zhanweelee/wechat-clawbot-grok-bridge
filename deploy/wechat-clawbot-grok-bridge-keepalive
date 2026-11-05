@@ -1,0 +1,117 @@
+#!/bin/sh
+# One-shot keepalive for wechat-clawbot-grok-bridge (serve + /healthz).
+# For hosts without a reliable service manager, pair with deploy/watchdog loop.
+#
+# Prints exactly one line:
+#   ok                      serve is up and session looks logged in
+#   restarted: <how>        serve was down and has been started again
+#   NEED_USER: <reason>     cannot fix alone; surface to the operator
+#
+# Restart order when serve is down:
+#   1. systemctl --user restart wechat-clawbot-grok-bridge (if unit exists)
+#   2. sudo -n systemctl restart wechat-clawbot-grok-bridge (system unit)
+#   3. pkill + setsid/nohup wechat-clawbot-grok-bridge serve
+set -u
+
+BINARY="${WCG_BRIDGE:-$HOME/.local/bin/wechat-clawbot-grok-bridge}"
+CONFIG="${WCG_CONFIG:-$HOME/.wechat-clawbot-grok-bridge/config.json}"
+ENVFILE="${WCG_ENVFILE:-$HOME/.config/wechat-clawbot-grok-bridge/env}"
+RUN_LOG="${WCG_RUN_LOG:-$HOME/.local/state/wechat-clawbot-grok-bridge/serve.log}"
+UNIT_NAME="${WCG_SYSTEMD_UNIT:-wechat-clawbot-grok-bridge.service}"
+
+if [ -f "$ENVFILE" ]; then
+	set -a
+	# shellcheck disable=SC1090
+	. "$ENVFILE"
+	set +a
+fi
+
+listen_addr() {
+	if [ -n "${WCG_LISTEN_ADDR:-}" ]; then
+		printf '%s' "$WCG_LISTEN_ADDR"
+		return 0
+	fi
+	if [ -f "$CONFIG" ]; then
+		v="$(sed -n 's/.*"listen_addr"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$CONFIG" 2>/dev/null | head -1)"
+		if [ -n "$v" ]; then
+			printf '%s' "$v"
+			return 0
+		fi
+	fi
+	printf '%s' "127.0.0.1:8787"
+}
+
+health_ok() {
+	addr="$(listen_addr)"
+	if ! command -v curl >/dev/null 2>&1; then
+		if pgrep -f "wechat-clawbot-grok-bridge.* serve" >/dev/null 2>&1; then
+			return 0
+		fi
+		return 1
+	fi
+	curl -sf --max-time 5 "http://${addr}/healthz" >/dev/null 2>&1
+}
+
+session_ok() {
+	out="$("$BINARY" status --config "$CONFIG" 2>&1)" || return 1
+	printf '%s\n' "$out" | grep -q '^session: ok'
+}
+
+if [ ! -x "$BINARY" ]; then
+	echo "NEED_USER: 找不到可执行文件 ${BINARY}，请先 make build 或 go install 并安装到 PATH"
+	exit 1
+fi
+
+if ! session_ok; then
+	echo "NEED_USER: 尚未登录 iLink，请运行: $BINARY login --config $CONFIG"
+	exit 1
+fi
+
+how=""
+if ! health_ok; then
+	if [ -d /run/systemd/system ] && command -v systemctl >/dev/null 2>&1 &&
+		systemctl --user cat "$UNIT_NAME" >/dev/null 2>&1 &&
+		systemctl --user restart "$UNIT_NAME" >/dev/null 2>&1; then
+		how="systemctl --user restart ${UNIT_NAME}"
+	elif [ -d /run/systemd/system ] && command -v systemctl >/dev/null 2>&1 &&
+		systemctl cat "$UNIT_NAME" >/dev/null 2>&1; then
+		if [ "$(id -u)" -eq 0 ] && systemctl restart "$UNIT_NAME" >/dev/null 2>&1; then
+			how="systemctl restart ${UNIT_NAME}"
+		elif sudo -n systemctl restart "$UNIT_NAME" >/dev/null 2>&1; then
+			how="sudo -n systemctl restart ${UNIT_NAME}"
+		fi
+	fi
+	if [ -z "$how" ]; then
+		pkill -f "wechat-clawbot-grok-bridge.* serve" 2>/dev/null || true
+		mkdir -p "$(dirname "$RUN_LOG")"
+		cfg_flag=""
+		if [ -f "$CONFIG" ]; then
+			cfg_flag="--config $CONFIG"
+		fi
+		(
+			if command -v setsid >/dev/null 2>&1; then
+				# shellcheck disable=SC2086
+				setsid nohup "$BINARY" serve $cfg_flag >>"$RUN_LOG" 2>&1 </dev/null &
+			else
+				# shellcheck disable=SC2086
+				nohup "$BINARY" serve $cfg_flag >>"$RUN_LOG" 2>&1 </dev/null &
+			fi
+		)
+		how="nohup wechat-clawbot-grok-bridge serve (log: ${RUN_LOG})"
+	fi
+	sleep 15
+	if ! health_ok; then
+		tail_line=""
+		if [ -f "$RUN_LOG" ]; then
+			tail_line="$(tail -1 "$RUN_LOG" 2>/dev/null || true)"
+		fi
+		echo "NEED_USER: serve 启动失败（${how}）${tail_line:+：$tail_line}"
+		exit 1
+	fi
+fi
+
+if [ -n "$how" ]; then
+	echo "restarted: $how"
+else
+	echo "ok"
+fi
