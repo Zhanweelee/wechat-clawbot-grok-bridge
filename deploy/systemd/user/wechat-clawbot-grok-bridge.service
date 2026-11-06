@@ -1,0 +1,14 @@
+[Unit]
+Description=WeChat ClawBot ↔ Grok bridge (serve)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=-%h/.config/wechat-clawbot-grok-bridge/env
+ExecStart=%h/.local/bin/wechat-clawbot-grok-bridge serve --config %h/.wechat-clawbot-grok-bridge/config.json
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=default.target

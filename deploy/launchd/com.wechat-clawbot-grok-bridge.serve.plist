@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.wechat-clawbot-grok-bridge.serve</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/usr/local/bin/wechat-clawbot-grok-bridge</string>
+		<string>serve</string>
+		<string>--config</string>
+		<string>HOME_PLACEHOLDER/.wechat-clawbot-grok-bridge/config.json</string>
+	</array>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/usr/local/bin:/usr/bin:/bin</string>
+	</dict>
+	<key>StandardOutPath</key>
+	<string>HOME_PLACEHOLDER/.local/state/wechat-clawbot-grok-bridge/serve.log</string>
+	<key>StandardErrorPath</key>
+	<string>HOME_PLACEHOLDER/.local/state/wechat-clawbot-grok-bridge/serve.log</string>
+	<key>KeepAlive</key>
+	<true/>
+	<key>RunAtLoad</key>
+	<true/>
+</dict>
+</plist>

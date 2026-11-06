@@ -1,0 +1,63 @@
+#!/bin/sh
+# Persistent keepalive loop (default every 120s) for hosts without systemd as PID 1.
+# Logs: ok | restarted: … | NEED_USER: …
+# NEED_USER is also written to watchdog.alert for Grok Bot routines to surface.
+set -u
+
+INTERVAL="${WCG_WATCHDOG_INTERVAL:-120}"
+KEEPALIVE="${WCG_KEEPALIVE:-$HOME/.local/bin/wechat-clawbot-grok-bridge-keepalive}"
+LOGDIR="${WCG_OPS_STATE_DIR:-$HOME/.local/state/wechat-clawbot-grok-bridge}"
+LOG="${LOGDIR}/watchdog.log"
+ALERT="${LOGDIR}/watchdog.alert"
+PIDFILE="${LOGDIR}/watchdog.pid"
+
+mkdir -p "$LOGDIR"
+echo $$ >"$PIDFILE"
+
+if [ -f "$PIDFILE" ]; then
+	old="$(cat "$PIDFILE" 2>/dev/null || true)"
+	if [ -n "$old" ] && [ "$old" != "$$" ] && kill -0 "$old" 2>/dev/null; then
+		if [ "$(tr '\0' ' ' </proc/$old/cmdline 2>/dev/null)" != "$(tr '\0' ' ' </proc/$$/cmdline 2>/dev/null)" ]; then
+			case "$(tr '\0' ' ' </proc/$old/cmdline 2>/dev/null)" in
+			*wechat-clawbot-grok-bridge-watchdog*) exit 0 ;;
+			esac
+		fi
+	fi
+fi
+echo $$ >"$PIDFILE"
+
+log() {
+	ts="$(date '+%Y-%m-%d %H:%M:%S %z')"
+	printf '%s %s\n' "$ts" "$*" >>"$LOG"
+}
+
+trim_log() {
+	if [ -f "$LOG" ]; then
+		sz=$(wc -c <"$LOG" 2>/dev/null || echo 0)
+		if [ "$sz" -gt 2000000 ]; then
+			tail -n 500 "$LOG" >"${LOG}.tmp" && mv "${LOG}.tmp" "$LOG"
+		fi
+	fi
+}
+
+log "watchdog start pid=$$ interval=${INTERVAL}s keepalive=${KEEPALIVE}"
+while true; do
+	if [ ! -x "$KEEPALIVE" ]; then
+		log "NEED_USER: missing $KEEPALIVE"
+		printf '%s\n' "NEED_USER: missing $KEEPALIVE" >"$ALERT"
+	else
+		out="$("$KEEPALIVE" 2>&1)"
+		line="$(printf '%s' "$out" | head -1)"
+		log "$line"
+		case "$line" in
+		NEED_USER:*)
+			printf '%s\n' "$line" >"$ALERT"
+			;;
+		*)
+			rm -f "$ALERT"
+			;;
+		esac
+	fi
+	trim_log
+	sleep "$INTERVAL"
+done
